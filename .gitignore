@@ -1,0 +1,70 @@
+# ── AI / IDE Tool Artifacts ───────────────────────────────────
+# Gemini / Antigravity IDE working files
+.agents/
+.gemini/
+
+# Editor settings (keep project-agnostic)
+.vscode/
+.idea/
+*.suo
+*.user
+*.sublime-project
+*.sublime-workspace
+
+# ── OS Generated Files ────────────────────────────────────────
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ── Secrets & Environment ─────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+*.pem
+*.key
+secrets.json
+config.local.js
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Node / Build Output ───────────────────────────────────────
+# (future-proofed if you ever add a build step)
+node_modules/
+dist/
+build/
+.npm
+.yarn/
+.pnp.*
+package-lock.json
+
+# ── Temporary & Backup Files ──────────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+*.swo
+
+# ── Python (local server) ────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo

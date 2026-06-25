@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Macro Rides – Hyperlocal EV Mobility Solution. Real-time route corridors, H3 spatial indexing, and dynamic pickup point eligibility." />
+  <title>Macro Rides | Hyperlocal EV Mobility</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <!-- ===================== MAP CANVAS ===================== -->
+  <div id="map" role="application" aria-label="Macro Rides live mobility map"></div>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="app-header" role="banner">
+    <div class="header-brand">
+      <svg class="brand-logo" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="18" cy="18" r="17" stroke="var(--accent-green)" stroke-width="2"/>
+        <path d="M10 22 L14 14 L18 20 L22 12 L26 22" stroke="var(--accent-green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="18" cy="20" r="2" fill="var(--accent-green)"/>
+      </svg>
+      <div class="brand-text">
+        <span class="brand-name">Macro Rides</span>
+        <span class="brand-tag">Hyperlocal EV Mobility</span>
+      </div>
+    </div>
+    <div class="header-status">
+      <span class="status-dot" id="status-dot" aria-live="polite"></span>
+      <span class="status-label" id="status-label">Initializing…</span>
+    </div>
+  </header>
+
+  <!-- ===================== FLOATING CONTROL PANEL ===================== -->
+  <aside class="control-panel" role="complementary" aria-label="Route control panel">
+    <div class="panel-section">
+      <h2 class="panel-title">Route Control</h2>
+
+      <div class="stat-grid">
+        <div class="stat-card" id="stat-eligible">
+          <span class="stat-value" id="eligible-count">0</span>
+          <span class="stat-label">Eligible Stops</span>
+        </div>
+        <div class="stat-card" id="stat-total">
+          <span class="stat-value" id="total-count">0</span>
+          <span class="stat-label">Total Stops</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">350m</span>
+          <span class="stat-label">Corridor</span>
+        </div>
+        <div class="stat-card" id="stat-h3">
+          <span class="stat-value" id="h3-count">0</span>
+          <span class="stat-label">H3 Cells</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3 class="section-heading">Simulation</h3>
+
+      <!-- Progress bar -->
+      <div class="progress-wrap" aria-label="Route progress">
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-start" aria-label="Start driver simulation">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><polygon points="5,3 17,10 5,17" fill="currentColor"/></svg>
+          Start Simulation
+        </button>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-reset" aria-label="Reset simulation">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="4,14 4,10 8,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Reset
+          </button>
+          <button class="btn btn-icon active" id="btn-follow" title="Camera: Following driver" aria-label="Toggle camera follow">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <circle cx="10" cy="10" r="3" fill="currentColor"/>
+              <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="3 2"/>
+              <path d="M10 2v2M10 16v2M2 10h2M16 10h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="btn-group mt-8">
+        <button class="btn btn-outline" id="btn-route-1" aria-label="Load route preset 1">Route A – Downtown</button>
+        <button class="btn btn-outline" id="btn-route-2" aria-label="Load route preset 2">Route B – Airport</button>
+        <button class="btn btn-outline" id="btn-route-3" aria-label="Load route preset 3">Route C – Suburban</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3 class="section-heading">Layers</h3>
+      <div class="toggle-list">
+        <label class="toggle-item">
+          <input type="checkbox" id="toggle-zone" checked aria-label="Toggle operating zone boundary" />
+          <span class="toggle-track"></span>
+          <span class="toggle-label">Zone Boundary</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="toggle-corridor" checked aria-label="Toggle 350m corridor buffer" />
+          <span class="toggle-track"></span>
+          <span class="toggle-label">350m Corridor</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="toggle-h3" id="toggle-h3-cells" aria-label="Toggle H3 cells overlay" />
+          <span class="toggle-track"></span>
+          <span class="toggle-label">H3 Cells</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="toggle-pickups" checked aria-label="Toggle pickup point markers" />
+          <span class="toggle-track"></span>
+          <span class="toggle-label">Pickup Points</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <h3 class="section-heading">Driver Speed</h3>
+      <div class="slider-row">
+        <input type="range" id="speed-slider" min="1" max="10" value="4" class="slider" aria-label="Driver simulation speed" />
+        <span class="slider-val" id="speed-val">4×</span>
+      </div>
+    </div>
+
+    <div class="panel-legend">
+      <h3 class="section-heading">Legend</h3>
+      <div class="legend-item"><span class="legend-dot eligible"></span> Eligible Stop</div>
+      <div class="legend-item"><span class="legend-dot ineligible"></span> Outside Corridor</div>
+      <div class="legend-item"><span class="legend-line trail"></span> Progress Trail</div>
+      <div class="legend-item"><span class="legend-line route" style="opacity:0.4;"></span> Planned Route</div>
+      <div class="legend-item"><span class="legend-area corridor"></span> 350m Buffer</div>
+
+    </div>
+  </aside>
+
+  <!-- ===================== DRIVER INFO TOAST ===================== -->
+  <div class="driver-toast" id="driver-toast" role="status" aria-live="polite" aria-atomic="true">
+    <div class="toast-icon">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="2" y="7" width="20" height="12" rx="2" stroke="var(--accent-green)" stroke-width="1.8"/>
+        <path d="M6 7V5a6 6 0 0 1 12 0v2" stroke="var(--accent-green)" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="13" r="2" fill="var(--accent-green)"/>
+        <path d="M12 15v2" stroke="var(--accent-green)" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="toast-content">
+      <span class="toast-title" id="toast-title">Driver EN-042</span>
+      <span class="toast-subtitle" id="toast-subtitle">Route Active</span>
+    </div>
+    <div class="toast-badge" id="toast-badge">LIVE</div>
+  </div>
+
+  <!-- ===================== SCRIPTS ===================== -->
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Turf.js for buffer geometry -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <!-- H3 for spatial indexing -->
+  <script src="https://unpkg.com/h3-js@4.1.0/dist/browser/h3-js.umd.js"></script>
+
+  <!-- App Modules -->
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
